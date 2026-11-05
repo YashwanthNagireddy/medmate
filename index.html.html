@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedMate: simple medicine reminder</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF6F5;--surface:#FFFFFF;--ink:#0F2A33;--muted:#44606A;--teal:#0B6E6E;--on-teal:#FFFFFF;--sun:#FFC845;--on-sun:#2B2000;--ok:#1B7A4B;--line:#C9DCDA;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0C1A1F;--surface:#13272E;--ink:#E8F3F2;--muted:#9DB8BD;--teal:#58C4C0;--on-teal:#06222A;--ok:#5FD39A;--line:#2A4750}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0C1A1F;--surface:#13272E;--ink:#E8F3F2;--muted:#9DB8BD;--teal:#58C4C0;--on-teal:#06222A;--ok:#5FD39A;--line:#2A4750}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;font-size:1.25rem;line-height:1.55}
+:focus-visible{outline:4px solid var(--sun);outline-offset:3px}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 0;flex-wrap:wrap;gap:10px}
+.logo{font-weight:700;font-size:1.5rem}
+.big{display:flex;gap:8px;align-items:center}
+.big button{min-width:56px;min-height:56px;border:3px solid var(--teal);background:var(--surface);color:var(--ink);border-radius:12px;font:inherit;font-weight:700;cursor:pointer}
+h1{font-size:clamp(2.2rem,6vw,3.2rem);line-height:1.1;margin:12px 0}
+h2{font-size:1.8rem;margin:0 0 8px}
+p{margin:0 0 12px}
+.muted{color:var(--muted)}
+section{padding:32px 0;border-top:2px solid var(--line)}
+.btn{display:block;width:100%;min-height:64px;border:0;border-radius:14px;background:var(--teal);color:var(--on-teal);font:inherit;font-weight:700;font-size:1.25rem;cursor:pointer}
+.btn.sun{background:var(--sun);color:var(--on-sun)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:3px solid var(--line)}
+:root[data-theme="dark"] .btn.ok,:root:not([data-theme="light"]) .btn.ok{color:#04210F}
+.med{background:var(--surface);border:3px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.med.done{border-color:var(--ok)}
+.med b{font-size:1.35rem;display:block}
+.med .t{color:var(--muted)}
+.med .btn{margin-top:10px}
+.tag{display:inline-block;background:var(--ok);color:#fff;font-weight:700;padding:2px 12px;border-radius:99px;margin-top:6px}
+:root[data-theme="dark"] .tag,:root:not([data-theme="light"]) .tag{color:#04210F}
+.prog{font-weight:700;margin-bottom:12px}
+.bar{height:16px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 18px}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+label{display:block;font-weight:700;margin:12px 0 6px}
+input{width:100%;min-height:60px;border:3px solid var(--ink);border-radius:12px;padding:0 14px;font:inherit;background:var(--surface);color:var(--ink)}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.times button{min-height:60px;border:3px solid var(--teal);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:1.1rem;cursor:pointer}
+.times button[aria-pressed="true"]{background:var(--teal);color:var(--on-teal)}
+.msg{min-height:1.6em;font-weight:700;margin:12px 0}
+.msg.err{color:#B3261E}
+:root[data-theme="dark"] .msg.err,:root:not([data-theme="light"]) .msg.err{color:#FF8A80}
+.msg.good{color:var(--ok)}
+.feat{display:grid;gap:14px}
+.feat div{background:var(--surface);border:3px solid var(--line);border-radius:18px;padding:16px}
+.feat b{display:block;font-size:1.25rem}
+footer{padding:28px 0 48px;color:var(--muted);font-size:1rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="logo">💊 MedMate</div>
+<div class="big" role="group" aria-label="Text size"><span>Text size</span><button id="smaller" type="button" aria-label="Make text smaller">A−</button><button id="larger" type="button" aria-label="Make text larger">A+</button></div>
+</header>
+
+<main>
+<h1>Never miss your medicine.</h1>
+<p class="muted">A simple reminder app made for older adults: big text, big buttons, and a spoken reminder.</p>
+
+<section id="today">
+<h2>Today’s medicines</h2>
+<p class="prog" id="prog"></p>
+<div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+<div id="list"></div>
+<button class="btn sun" id="remind" type="button">▶ Play reminder</button>
+<p class="msg" id="rmsg" role="status"></p>
+</section>
+
+<section id="add">
+<h2>Add a medicine</h2>
+<label for="name">Medicine name</label>
+<input id="name" type="text" placeholder="For example, Aspirin" autocomplete="off">
+<label>When do you take it?</label>
+<div class="times" role="group" aria-label="Time of day">
+<button type="button" data-t="Morning" aria-pressed="true">☀ Morning</button>
+<button type="button" data-t="Afternoon" aria-pressed="false">🌤 Afternoon</button>
+<button type="button" data-t="Evening" aria-pressed="false">🌙 Evening</button>
+<button type="button" data-t="Night" aria-pressed="false">★ Night</button>
+</div>
+<p class="msg" id="amsg" role="status"></p>
+<button class="btn" id="save" type="button">Save medicine</button>
+</section>
+
+<section id="why">
+<h2>Why it is easy to use</h2>
+<div class="feat">
+<div><b>Large text and buttons</b>Easy to read and tap. You can also make the text bigger.</div>
+<div><b>One clear action</b>Each medicine has one big button: Taken.</div>
+<div><b>Sound and voice</b>The reminder plays a sound and says the medicine name aloud.</div>
+</div>
+</section>
+</main>
+<footer>MedMate is a student HCI project and is not medical advice. Always follow your doctor’s instructions.</footer>
+</div>
+
+<script>
+(function(){
+var meds=[
+{id:1,n:"Amlodipine",t:"Morning",done:false},
+{id:2,n:"Metformin",t:"Morning",done:false},
+{id:3,n:"Vitamin D",t:"Afternoon",done:false},
+{id:4,n:"Metformin",t:"Evening",done:false}];
+var time="Morning",nid=5,size=100;
+var list=document.getElementById("list");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function render(){
+ var d=meds.filter(function(m){return m.done}).length;
+ document.getElementById("prog").textContent=d+" of "+meds.length+" taken today";
+ document.getElementById("barFill").style.width=(d/meds.length*100)+"%";
+ var h="";
+ meds.forEach(function(m){
+  h+='<div class="med'+(m.done?' done':'')+'"><b>'+esc(m.n)+'</b><span class="t">'+m.t+'</span>';
+  h+=m.done?'<br><span class="tag">✓ Taken</span><button class="btn ghost" data-undo="'+m.id+'" type="button">Undo</button>'
+           :'<button class="btn ok" data-take="'+m.id+'" type="button">Taken</button>';
+  h+='</div>'});
+ list.innerHTML=h}
+function say(t){try{if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(t);u.rate=.85;speechSynthesis.cancel();speechSynthesis.speak(u)}}catch(e){}}
+function beep(){try{var C=window.AudioContext||window.webkitAudioContext,c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(c.destination);o.start();setTimeout(function(){o.stop();c.close()},450)}catch(e){}}
+list.addEventListener("click",function(e){
+ var b=e.target.closest("button");if(!b)return;
+ var id=b.dataset.take||b.dataset.undo;
+ meds.forEach(function(m){if(m.id==id)m.done=!!b.dataset.take});
+ render()});
+document.getElementById("remind").addEventListener("click",function(){
+ var next=meds.filter(function(m){return !m.done})[0];
+ var r=document.getElementById("rmsg");
+ if(!next){r.textContent="All done for today. Well done!";return}
+ r.textContent="Time to take your "+next.n+" ("+next.t.toLowerCase()+").";
+ beep();say("Time to take your "+next.n)});
+document.querySelectorAll(".times button").forEach(function(b){b.addEventListener("click",function(){
+ time=b.dataset.t;
+ document.querySelectorAll(".times button").forEach(function(x){x.setAttribute("aria-pressed",x===b)})})});
+document.getElementById("save").addEventListener("click",function(){
+ var inp=document.getElementById("name"),m=document.getElementById("amsg"),n=inp.value.trim();
+ if(!n){m.className="msg err";m.textContent="Please type the medicine name.";return}
+ meds.push({id:nid++,n:n,t:time,done:false});
+ inp.value="";m.className="msg good";m.textContent="✓ "+n+" added for "+time.toLowerCase()+".";render()});
+function setSize(){document.documentElement.style.fontSize=size+"%"}
+document.getElementById("larger").addEventListener("click",function(){size=Math.min(150,size+10);setSize()});
+document.getElementById("smaller").addEventListener("click",function(){size=Math.max(80,size-10);setSize()});
+render();
+})();
+</script>
+</body>
+</html>
